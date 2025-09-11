@@ -70,7 +70,6 @@ def main():
             "args": {"a": 2, "b": 3}
         }""" % prompt
 
-        decoded, ids = generate_one_token(prompt, model, tokenizer)
         print(f"Prompt: {prompt}")
         print(f"Decoded: {decoded}")
 
@@ -85,7 +84,6 @@ def main():
         else:
             print(f"Validation failed for prompt {prompt}: {result_or_errors}")
      
-    # Step 4: write output file
     with output_file.open("w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     print(f"Results written to {output_file}")
