@@ -1,19 +1,12 @@
-# (entry point)
-# Reads input files.
-# Sends prompts to the LLM.
-# Gets candidate JSON output.
-# Calls functions in validation.py to check that output.
-# If valid → saves to output/
-# If invalid → logs error and retries.
-
 from llm_sdk import Small_LLM_Model
-from .tokenizer_stub import StubTokenizer
+from .tokenizer_bpe import BPETokenizer
 import json
 import sys
 import numpy as np
 from pathlib import Path
 from .validation import build_functions_lookup, validate_and_coerce
 from .utils import safe_parse_json
+from .generation import generate_text
 
 
 def generate_one_token(prompt: str, model, tokenizer):
@@ -40,7 +33,6 @@ def load_json_file(path: Path):
 
 
 def main():
-    # Step 1: locate input files
     base_dir = Path(__file__).resolve().parent.parent
     input_dir = base_dir / "input"
     output_dir = base_dir / "output"
@@ -56,22 +48,17 @@ def main():
     test_prompts = load_json_file(tests_file)
     results = []
     model = Small_LLM_Model()
-    tokenizer = StubTokenizer()
+    tokenizer = BPETokenizer("Qwen/Qwen3-0.6B")
     
     # print("Loaded test prompts:", test_prompts)
     # print("Loaded function definitions:", function_defs)
     
     for prompt_dict in test_prompts:
         prompt = prompt_dict["prompt"]
-        decoded, ids = generate_one_token(prompt, model, tokenizer)
-        raw_output = """{
-            "prompt": "%s",
-            "fn_name": "fn_add_numbers",
-            "args": {"a": 2, "b": 3}
-        }""" % prompt
+        raw_output = generate_text(prompt, model, tokenizer)
 
         print(f"Prompt: {prompt}")
-        print(f"Decoded: {decoded}")
+        print(f"Raw output from model: {raw_output}")
 
         parsed = safe_parse_json(raw_output)
         if parsed is None:
